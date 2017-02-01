@@ -55,6 +55,14 @@ FUNCTION SO_ANTERIORES_NEW_FN(
         ,P_WITH_88           IN ODS_COMMON_PKG.S_STR_BOOLEAN                       DEFAULT ODS_COMMON_PKG.C_STR_FALSE)
 RETURN GBU_CADENA_TABLE_TYPE;
 
+FUNCTION SO_ANTERIORES_NEW_FN(
+          P_BUSINESS_ID            IN ODS_BUSN_TRANSACTIONS_PEP_MV.BUSINESS_ID%TYPE
+         ,P_BUSINESS_SEQUENCE      IN ODS_BUSN_TRANSACTIONS_PEP_MV.BUSINESS_SEQUENCE%TYPE
+         ,P_FAMILY_TYPE_REF        IN ODS_BUSN_TRANSACTIONS_PEP_MV.FAMILY_TYPE_REF%TYPE		 
+         ,P_DOC_COMM_LOCATION_CODE IN ODS_BUSN_TRANSACTIONS_PEP_MV.DOC_COMM_LOCATION_CODE%TYPE
+		     ,P_WITH_88           	   IN ODS_COMMON_PKG.S_STR_BOOLEAN DEFAULT ODS_COMMON_PKG.C_STR_FALSE)
+RETURN GBU_CADENA_TABLE_TYPE;
+
 FUNCTION CALCULOS_FN(
          P_C_BRANCH_OI_ID    IN GBU_FT_FACTURACION.C_BRANCH_OI_ID%TYPE
         ,P_ORIGEN            IN VARCHAR2)
@@ -1819,6 +1827,53 @@ BEGIN
                           ,P_BUSINESS_SEQUENCE      => V_BUSINESS_SEQUENCE
                           ,P_FAMILY_TYPE_REF        => V_FAMILY_TYPE_REF
                           ,P_DOC_COMM_LOCATION_CODE => V_DOC_COMM_LOCATION_CODE);
+
+      /*Retorno Sales Orders Anteriores*/
+       V_CADENA_OBJ:= SO_ANTERIORES_NEW_FN(
+                                        P_BUSN_TRX_PEP_TABLE => V_BUSN_TRX_PEP_FINAL_TABLE
+                                       ,P_WITH_88            => P_WITH_88);
+
+       RETURN  V_CADENA_OBJ;
+END so_anteriores_new_fn;
+/*********************************************************************************************
+Nombre del programa:   SO_ANTERIORES_NEW_FN - (SOBRECARGA)
+        Sistema: GBU Calculo Utilities
+        Objetivo: Pasado por parámetro el Bid, Secuencia, Sociedad del pep principal, 
+        Tipo de familia que se quiere obtener (TUBULAR-ACCESORIO-SERVICIO),(y opcionalmente si se quiere 
+        obtener el documento 88)
+        Reconstruye la rama por medio de GET_PRINCIPAL_CHAIN_SP 
+        Por ultimo devuelve todas las SO por medio de so_anteriores_new_fn
+
+        Parámetros de entrada / Salida:
+                                       IN(BUSINESS_ID, BUSINESS_SEQUENCE, FAMILY_TYPE_REF, DOC_COMM_LOCATION_CODE)[Opcional P_WITH_88]
+                                       OUT(gbu_cadena_table_type)
+
+        Notas:
+        Autor: Romero Alejandro - S15380
+        Historia:
+        Fecha           Autor                   Descripción
+        31/01/2017      Romero Alejandro -      Creación del procedure
+*********************************************************************************************/
+FUNCTION so_anteriores_new_fn(
+          P_BUSINESS_ID            IN  ODS_BUSN_TRANSACTIONS_PEP_MV.BUSINESS_ID%TYPE
+         ,P_BUSINESS_SEQUENCE      IN  ODS_BUSN_TRANSACTIONS_PEP_MV.BUSINESS_SEQUENCE%TYPE
+         ,P_FAMILY_TYPE_REF        IN  ODS_BUSN_TRANSACTIONS_PEP_MV.FAMILY_TYPE_REF%TYPE		 
+         ,P_DOC_COMM_LOCATION_CODE IN  ODS_BUSN_TRANSACTIONS_PEP_MV.DOC_COMM_LOCATION_CODE%TYPE
+		     ,P_WITH_88           	   IN  ODS_COMMON_PKG.S_STR_BOOLEAN DEFAULT ODS_COMMON_PKG.C_STR_FALSE
+		 )
+RETURN GBU_CADENA_TABLE_TYPE
+IS
+     V_BUSN_TRX_PEP_FINAL_TABLE      ODS_BUSN_TRX_PEP_TABLE_TYPE:= ODS_BUSN_TRX_PEP_TABLE_TYPE();
+     V_CADENA_OBJ                    GBU_CADENA_TABLE_TYPE      := GBU_CADENA_TABLE_TYPE();
+BEGIN
+      
+      /*Obtengo Rama Principal*/
+       GET_PRINCIPAL_CHAIN_SP(
+                           P_BUSN_TRX_PEP_TABLE     => V_BUSN_TRX_PEP_FINAL_TABLE
+                          ,P_BUSINESS_ID            => P_BUSINESS_ID
+                          ,P_BUSINESS_SEQUENCE      => P_BUSINESS_SEQUENCE
+                          ,P_FAMILY_TYPE_REF        => P_FAMILY_TYPE_REF
+                          ,P_DOC_COMM_LOCATION_CODE => P_DOC_COMM_LOCATION_CODE);
 
       /*Retorno Sales Orders Anteriores*/
        V_CADENA_OBJ:= SO_ANTERIORES_NEW_FN(
